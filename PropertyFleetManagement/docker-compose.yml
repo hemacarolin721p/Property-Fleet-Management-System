@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: property_fleet_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - property-network
+
+  spring_boot_app:
+    image: spring-boot-app
+    container_name: spring-boot-container
+    build:
+      context: .  # Specify the build context (current directory)
+      dockerfile: Dockerfile  # Specify the Dockerfile to use
+    ports:
+      - "8080:8080"  # Expose port 8080
+    depends_on:
+      - mysql_db  # Ensure the database is up before starting the app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/property_fleet_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: userpassword
+    networks:
+      - property-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  property-network:
+    driver: bridge
